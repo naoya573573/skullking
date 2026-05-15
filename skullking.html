@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="スカルキング">
+<title>☠️ スカルキング 点数計算</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+:root{
+  --purple:#3C3489;
+  --purple-light:#EEEDFE;
+  --purple-mid:#534AB7;
+  --teal:#0F6E56;
+  --red:#A32D2D;
+  --amber:#BA7517;
+  --amber-light:#FAEEDA;
+  --bg:#F7F6F2;
+  --surface:#FFFFFF;
+  --border:#E2E0D8;
+  --text:#1A1A1A;
+  --text2:#6B6860;
+  --text3:#9B9890;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);font-family:'Noto Sans JP',sans-serif;color:var(--text)}
+body{overflow-x:hidden}
+
+.app{max-width:480px;margin:0 auto;padding:0 0 40px;min-height:100vh}
+
+/* ===== HEADER ===== */
+.app-header{background:var(--purple);color:#fff;padding:16px 20px 14px;position:sticky;top:0;z-index:100}
+.header-inner{display:flex;align-items:center;gap:10px}
+.header-logo{font-size:22px;line-height:1}
+.header-title{font-size:17px;font-weight:700;letter-spacing:.03em}
+.header-sub{font-size:11px;opacity:.7;margin-top:1px}
+.header-right{margin-left:auto;text-align:right}
+.round-badge{font-size:11px;opacity:.7}
+.round-big{font-size:22px;font-weight:700;line-height:1}
+
+/* ===== PROGRESS ===== */
+.progress-wrap{height:3px;background:rgba(255,255,255,.2)}
+.progress-fill{height:3px;background:#fff;transition:width .4s ease}
+
+/* ===== TAB BAR ===== */
+.tab-bar{display:flex;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:71px;z-index:99}
+.tab-btn{flex:1;height:44px;border:none;background:none;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;font-family:inherit;position:relative}
+.tab-btn.active{color:var(--purple)}
+.tab-btn.active::after{content:'';position:absolute;bottom:0;left:16px;right:16px;height:2px;background:var(--purple);border-radius:1px}
+
+/* ===== SECTIONS ===== */
+.section{padding:16px}
+.section+.section{padding-top:0}
+
+/* ===== CARD ===== */
+.card{background:var(--surface);border-radius:16px;border:1px solid var(--border);overflow:hidden;margin-bottom:12px}
+.card-header{padding:12px 16px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.card-title{font-size:12px;font-weight:700;color:var(--text2);letter-spacing:.06em;text-transform:none}
+.card-body{padding:0}
+
+/* ===== SCORE CHIPS ===== */
+.score-row{display:flex;gap:8px;padding:16px;overflow-x:auto;background:var(--surface);border-bottom:1px solid var(--border)}
+.score-chip{flex-shrink:0;min-width:70px;background:var(--bg);border-radius:12px;padding:8px 10px;text-align:center;border:1px solid var(--border)}
+.chip-name{font-size:11px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:68px}
+.chip-score{font-size:17px;font-weight:700;color:var(--text);margin-top:1px}
+.chip-leader{background:var(--purple-light);border-color:var(--purple-mid)}
+.chip-leader .chip-score{color:var(--purple)}
+.chip-leader .chip-name{color:var(--purple-mid)}
+
+/* ===== INPUT TABLE ===== */
+.player-row-input{display:flex;align-items:center;padding:10px 16px;border-bottom:1px solid var(--border);gap:10px}
+.player-row-input:last-child{border-bottom:none}
+.player-color{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.player-name-label{flex:1;font-size:14px;font-weight:500;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.input-pair{display:flex;gap:6px}
+
+/* ===== SPINNER ===== */
+.spin-wrap{display:flex;align-items:center;gap:0}
+.spin-btn{width:30px;height:38px;border:1px solid var(--border);background:var(--bg);cursor:pointer;font-size:16px;font-weight:700;color:var(--text2);display:flex;align-items:center;justify-content:center;user-select:none;-webkit-user-select:none;flex-shrink:0}
+.spin-btn:first-child{border-radius:8px 0 0 8px}
+.spin-btn:last-child{border-radius:0 8px 8px 0}
+.spin-btn:active{background:var(--purple-light)}
+.spin-field{width:44px;height:38px;border:1px solid var(--border);border-left:none;border-right:none;border-radius:0;text-align:center;font-size:16px;font-weight:700;background:#fff;color:var(--text);-moz-appearance:textfield;appearance:textfield;font-family:inherit}
+.spin-field::-webkit-inner-spin-button,.spin-field::-webkit-outer-spin-button{-webkit-appearance:none}
+.spin-field:focus{outline:none;background:var(--purple-light)}
+.spin-label{font-size:10px;color:var(--text3);text-align:center;margin-top:3px}
+
+/* ===== BONUS ROWS ===== */
+.bonus-player{background:var(--bg);border-radius:12px;margin:0 16px 10px;padding:12px 14px;border:1px solid var(--border)}
+.bonus-player:last-child{margin-bottom:0}
+.bonus-player-name{font-size:13px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.bonus-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0}
+.bonus-item+.bonus-item{border-top:1px solid var(--border)}
+.bonus-item-label{font-size:12px;color:var(--text);flex:1;line-height:1.4}
+.bonus-item-sub{font-size:10px;color:var(--text3);margin-top:1px}
+
+/* ===== TOGGLE SWITCH ===== */
+.sw-outer{display:flex;align-items:center;gap:8px}
+.sw-text{font-size:12px;font-weight:500;min-width:24px;text-align:right}
+.sw-text.off{color:var(--text3)}
+.sw-text.on{color:var(--purple)}
+.switch{position:relative;width:48px;height:26px;flex-shrink:0}
+.switch input{opacity:0;width:0;height:0;position:absolute}
+.sw-track{position:absolute;inset:0;border-radius:13px;background:var(--border);cursor:pointer;transition:background .2s}
+.sw-track::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.switch input:checked+.sw-track{background:var(--purple)}
+.switch input:checked+.sw-track::after{transform:translateX(22px)}
+
+/* ===== NOTICE ===== */
+.notice{display:flex;align-items:flex-start;gap:8px;background:var(--purple-light);border-radius:10px;padding:10px 12px;margin:0 16px 12px;font-size:12px;color:var(--purple);line-height:1.5}
+
+/* ===== EDIT BANNER ===== */
+.edit-banner{display:none;align-items:center;gap:10px;background:var(--amber-light);border-bottom:1px solid #F0C060;padding:10px 16px;font-size:13px;color:#7A4A00;line-height:1.4}
+
+/* ===== BUTTONS ===== */
+.btn-primary{width:calc(100% - 32px);height:52px;border-radius:14px;border:none;background:var(--purple);color:#fff;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;margin:16px;display:block;letter-spacing:.02em;transition:background .15s}
+.btn-primary:active{background:var(--purple-mid)}
+.btn-primary.amber{background:var(--amber)}
+.btn-primary.amber:active{background:#854F0B}
+
+/* ===== SETUP ===== */
+.setup-wrap{padding:20px 16px}
+.setup-logo{text-align:center;padding:20px 0 24px}
+.setup-logo .skull{font-size:56px;margin-bottom:8px}
+.setup-logo h1{font-size:24px;font-weight:700;color:var(--purple)}
+.setup-logo p{font-size:13px;color:var(--text2);margin-top:4px}
+.p-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.p-dot-setup{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+.p-name-input{flex:1;height:42px;border:1px solid var(--border);border-radius:10px;padding:0 12px;font-size:15px;background:#fff;color:var(--text);font-family:inherit}
+.p-name-input:focus{outline:none;border-color:var(--purple-mid);background:var(--purple-light)}
+.add-btn{width:100%;height:42px;border:1.5px dashed var(--border);border-radius:10px;background:none;cursor:pointer;font-size:13px;color:var(--text2);font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:4px}
+.add-btn:active{background:var(--bg)}
+.remove-btn{width:30px;height:30px;border:none;background:none;cursor:pointer;color:var(--text3);font-size:18px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex-shrink:0}
+
+/* ===== HISTORY ===== */
+.hist-section{padding:16px}
+.ranking-card{background:var(--surface);border-radius:16px;border:1px solid var(--border);overflow:hidden;margin-bottom:16px}
+.rank-row{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.rank-row:last-child{border-bottom:none}
+.rank-num{font-size:13px;color:var(--text3);font-weight:700;width:20px;text-align:center;flex-shrink:0}
+.rank-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.rank-name{flex:1;font-size:14px;font-weight:500}
+.rank-score{font-size:16px;font-weight:700}
+.rank-1st .rank-name,.rank-1st .rank-score{color:var(--purple)}
+.hist-label{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.06em;margin-bottom:8px}
+.hist-card{background:var(--surface);border-radius:14px;border:1px solid var(--border);overflow:hidden;margin-bottom:10px}
+.hist-card-header{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--border)}
+.hist-round-label{font-size:12px;font-weight:700;color:var(--text2)}
+.hist-edit-btn{padding:4px 12px;border:1px solid var(--amber);border-radius:20px;background:none;cursor:pointer;font-size:11px;color:var(--amber);font-weight:700;font-family:inherit}
+.hist-edit-btn:active{background:var(--amber-light)}
+.hist-row{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-bottom:1px solid var(--border);font-size:13px}
+.hist-row:last-child{border-bottom:none}
+.hist-player{display:flex;align-items:center;gap:6px}
+.hist-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.hist-bid{font-size:11px;color:var(--text3);margin-left:4px}
+.hist-pts{font-weight:700}
+
+/* ===== FINALE ===== */
+.finale-wrap{text-align:center;padding:30px 20px}
+.finale-trophy{font-size:64px;margin-bottom:12px;animation:bounce .6s ease infinite alternate}
+@keyframes bounce{from{transform:translateY(0)}to{transform:translateY(-8px)}}
+.finale-winner{font-size:22px;font-weight:700;color:var(--purple);margin-bottom:4px}
+.finale-sub{font-size:14px;color:var(--text2);margin-bottom:28px}
+.finale-ranking{margin-bottom:20px}
+.finale-rank-row{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--surface);border-radius:14px;border:1px solid var(--border);margin-bottom:8px}
+.finale-rank-row.gold{background:var(--purple-light);border-color:var(--purple-mid)}
+.medal{font-size:20px;width:28px;text-align:center;flex-shrink:0}
+.finale-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.finale-name{flex:1;font-size:15px;font-weight:700;text-align:left}
+.finale-score{font-size:18px;font-weight:700}
+.finale-rank-row.gold .finale-name,.finale-rank-row.gold .finale-score{color:var(--purple)}
+.replay-btn{width:100%;height:48px;border-radius:14px;border:1.5px solid var(--border);background:none;font-size:15px;color:var(--text2);cursor:pointer;font-family:inherit;font-weight:500}
+.replay-btn:active{background:var(--bg)}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- SETUP -->
+  <div id="view-setup">
+    <div class="setup-wrap">
+      <div class="setup-logo">
+        <div class="skull">☠️</div>
+        <h1>スカルキング</h1>
+        <p>初版ルール対応 点数計算ツール</p>
+      </div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-header"><span class="card-title">プレイヤー（2〜6人）</span></div>
+        <div class="card-body" style="padding:12px 14px">
+          <div id="player-list"></div>
+          <button class="add-btn" onclick="addPlayer()">＋ プレイヤーを追加</button>
+        </div>
+      </div>
+      <button class="btn-primary" style="margin:0;width:100%" onclick="startGame()">ヨーホーホー！ゲーム開始</button>
+    </div>
+  </div>
+
+  <!-- GAME -->
+  <div id="view-game" style="display:none">
+    <div class="app-header">
+      <div class="header-inner">
+        <div class="header-logo">☠️</div>
+        <div>
+          <div class="header-title">スカルキング</div>
+          <div class="header-sub">初版ルール対応</div>
+        </div>
+        <div class="header-right">
+          <div class="round-badge">ROUND</div>
+          <div class="round-big" id="hdr-round">1 / 10</div>
+        </div>
+      </div>
+    </div>
+    <div class="progress-wrap"><div class="progress-fill" id="prog" style="width:0%"></div></div>
+
+    <div class="tab-bar">
+      <button class="tab-btn active" id="tbtn-input" onclick="switchTab('input')">ラウンド入力</button>
+      <button class="tab-btn" id="tbtn-hist" onclick="switchTab('hist')">スコア履歴</button>
+    </div>
+
+    <!-- INPUT TAB -->
+    <div id="tab-input">
+      <div class="edit-banner" id="edit-banner">
+        ✏️ <span id="edit-banner-text"></span>
+      </div>
+      <div class="score-row" id="score-row"></div>
+
+      <div style="padding:14px 16px 0">
+        <div class="card" style="margin-bottom:0">
+          <div class="card-header">
+            <span class="card-title">宣言数 と 実際の獲得数</span>
+          </div>
+          <div class="card-body" id="input-rows"></div>
+        </div>
+      </div>
+
+      <div style="padding:14px 16px 0">
+        <div class="notice">ℹ️ ボーナスは宣言成功者のみ有効。確定時に自動判定します。</div>
+        <div class="card-title" style="margin-bottom:10px">☠️ ボーナス入力</div>
+        <div id="bonus-rows"></div>
+      </div>
+
+      <button class="btn-primary" id="confirm-btn" onclick="confirmRound()">次のラウンドへ進む →</button>
+    </div>
+
+    <!-- HIST TAB -->
+    <div id="tab-hist" style="display:none">
+      <div class="hist-section">
+        <div class="hist-label">現在の順位</div>
+        <div class="ranking-card" id="ranking-now"></div>
+        <div class="hist-label" style="margin-top:16px">ラウンド別履歴</div>
+        <div id="hist-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FINALE -->
+  <div id="view-finale" style="display:none">
+    <div class="app-header" style="position:static">
+      <div class="header-inner">
+        <div class="header-logo">☠️</div>
+        <div><div class="header-title">ゲーム終了！</div></div>
+      </div>
+    </div>
+    <div class="finale-wrap">
+      <div class="finale-trophy">🏆</div>
+      <div class="finale-winner" id="finale-winner"></div>
+      <div class="finale-sub" id="finale-sub"></div>
+      <div class="finale-ranking" id="finale-ranking"></div>
+      <button class="replay-btn" onclick="location.reload()">🔄 もう一度プレイ</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const COLORS=['#534AB7','#1D9E75','#D85A30','#D4537E','#BA7517','#378ADD'];
+let players=[], totals=[], round=1, history=[], editingRound=null;
+
+function init(){
+  players=[{name:'プレイヤー1'},{name:'プレイヤー2'},{name:'プレイヤー3'}];
+  renderSetup();
+}
+
+function renderSetup(){
+  const list=document.getElementById('player-list');
+  list.innerHTML='';
+  players.forEach((p,i)=>{
+    const d=document.createElement('div');
+    d.className='p-row';
+    d.innerHTML=`<div class="p-dot-setup" style="background:${COLORS[i]}"></div>
+    <input class="p-name-input" value="${p.name}" oninput="players[${i}].name=this.value" placeholder="名前">
+    <button class="remove-btn" onclick="removePlayer(${i})">✕</button>`;
+    list.appendChild(d);
+  });
+}
+
+function addPlayer(){
+  if(players.length>=6)return;
+  players.push({name:'プレイヤー'+(players.length+1)});
+  renderSetup();
+}
+
+function removePlayer(i){
+  if(players.length<=2)return;
+  players.splice(i,1);
+  renderSetup();
+}
+
+function startGame(){
+  players=players.map((p,i)=>({...p,name:(p.name.trim()||'P'+(i+1))}));
+  totals=players.map(()=>0);
+  history=[]; round=1; editingRound=null;
+  document.getElementById('view-setup').style.display='none';
+  document.getElementById('view-game').style.display='block';
+  renderRound();
+}
+
+function spinnerHTML(id,mn,mx,val){
+  return `<div>
+    <div class="spin-wrap">
+      <button class="spin-btn" type="button" ontouchstart="" onclick="spinVal('${id}',-1,${mn},${mx})">−</button>
+      <input class="spin-field" id="${id}" type="number" inputmode="numeric" min="${mn}" max="${mx}" value="${val}"
+        onchange="clampVal(this,${mn},${mx})" oninput="clampVal(this,${mn},${mx})">
+      <button class="spin-btn" type="button" ontouchstart="" onclick="spinVal('${id}',1,${mn},${mx})">＋</button>
+    </div>
+  </div>`;
+}
+
+function spinVal(id,d,mn,mx){
+  const el=document.getElementById(id);
+  let v=parseInt(el.value);if(isNaN(v))v=0;
+  el.value=Math.min(mx,Math.max(mn,v+d));
+}
+
+function clampVal(el,mn,mx){
+  let v=parseInt(el.value);if(isNaN(v))return;
+  el.value=Math.min(mx,Math.max(mn,v));
+}
+
+function switchHTML(id,checked){
+  const on=!!checked;
+  return `<div style="display:flex;align-items:center;gap:8px">
+    <span class="sw-text ${on?'on':'off'}" id="swl-${id}">${on?'あり':'なし'}</span>
+    <label class="switch">
+      <input type="checkbox" id="${id}" ${on?'checked':''} onchange="updateSwitch('${id}')">
+      <span class="sw-track"></span>
+    </label>
+  </div>`;
+}
+
+function updateSwitch(id){
+  const on=document.getElementById(id).checked;
+  const l=document.getElementById('swl-'+id);
+  l.textContent=on?'あり':'なし';
+  l.className='sw-text '+(on?'on':'off');
+}
+
+function recalcTotals(){
+  totals=players.map(()=>0);
+  history.forEach(h=>h.data.forEach((d,i)=>{totals[i]+=d.total;}));
+}
+
+function updateScoreRow(){
+  const sb=document.getElementById('score-row');
+  if(!sb)return;
+  sb.innerHTML='';
+  const max=Math.max(...totals);
+  players.forEach((p,i)=>{
+    const chip=document.createElement('div');
+    const lead=totals[i]===max&&history.length>0;
+    chip.className='score-chip'+(lead?' chip-leader':'');
+    chip.innerHTML=`<div class="chip-name">${p.name}</div><div class="chip-score">${totals[i]}</div>`;
+    sb.appendChild(chip);
+  });
+}
+
+function renderRound(prefill){
+  const isEdit=editingRound!==null;
+  const dr=isEdit?editingRound:round;
+  document.getElementById('hdr-round').textContent=dr+' / 10';
+  document.getElementById('prog').style.width=((round-1)/10*100)+'%';
+  const banner=document.getElementById('edit-banner');
+  const btn=document.getElementById('confirm-btn');
+  if(isEdit){
+    banner.style.display='flex';
+    document.getElementById('edit-banner-text').textContent=`ラウンド ${dr} を修正中。確定すると再計算します。`;
+    btn.textContent='修正を確定する';
+    btn.className='btn-primary amber';
+  } else {
+    banner.style.display='none';
+    btn.textContent=round>=10?'🏴‍☠️ ゲーム終了！結果を見る':'次のラウンドへ進む →';
+    btn.className='btn-primary';
+  }
+  updateScoreRow();
+
+  // input rows
+  const ir=document.getElementById('input-rows');
+  ir.innerHTML='';
+  players.forEach((p,i)=>{
+    const pf=prefill?prefill[i]:null;
+    const d=document.createElement('div');
+    d.className='player-row-input';
+    d.innerHTML=`<div class="player-color" style="background:${COLORS[i]}"></div>
+    <span class="player-name-label">${p.name}</span>
+    <div class="input-pair">
+      <div style="text-align:center">${spinnerHTML('bid-'+i,0,dr,pf?pf.bid:0)}<div class="spin-label">宣言</div></div>
+      <div style="text-align:center">${spinnerHTML('win-'+i,0,dr,pf?pf.win:0)}<div class="spin-label">実獲得</div></div>
+    </div>`;
+    ir.appendChild(d);
+  });
+
+  // bonus rows
+  const br=document.getElementById('bonus-rows');
+  br.innerHTML='';
+  players.forEach((p,i)=>{
+    const pf=prefill?prefill[i]:null;
+    const d=document.createElement('div');
+    d.className='bonus-player';
+    d.innerHTML=`<div class="bonus-player-name"><div class="player-color" style="background:${COLORS[i]}"></div>${p.name}</div>
+    <div class="bonus-item">
+      <div><div class="bonus-item-label">☠️ 倒した海賊の数</div><div class="bonus-item-sub">+30pt × 数（SK出す前に出た海賊のみ）</div></div>
+      ${spinnerHTML('pirate-'+i,0,5,pf?pf.pirates:0)}
+    </div>
+    <div class="bonus-item">
+      <div><div class="bonus-item-label">🧜 人魚でSKに勝利</div><div class="bonus-item-sub">+50pt ボーナス</div></div>
+      ${switchHTML('mermaid-'+i,pf?pf.mermaid:false)}
+    </div>`;
+    br.appendChild(d);
+  });
+}
+
+function calcRoundData(){
+  const dr=editingRound!==null?editingRound:round;
+  return players.map((p,i)=>{
+    const bid=parseInt(document.getElementById('bid-'+i).value)||0;
+    const win=parseInt(document.getElementById('win-'+i).value)||0;
+    const pirates=parseInt(document.getElementById('pirate-'+i).value)||0;
+    const mermaid=document.getElementById('mermaid-'+i).checked;
+    const success=bid===win;
+    const base=bid===0?(success?dr*10:-(dr*10)):(success?bid*20:Math.abs(bid-win)*(-10));
+    const bonus=(success&&bid>0)?pirates*30+(mermaid?50:0):0;
+    return {name:p.name,bid,win,base,bonus,total:base+bonus,success,pirates,mermaid};
+  });
+}
+
+function confirmRound(){
+  const isEdit=editingRound!==null;
+  const result=calcRoundData();
+  if(isEdit){
+    const idx=history.findIndex(h=>h.round===editingRound);
+    if(idx>=0)history[idx]={round:editingRound,data:result};
+    recalcTotals();
+    editingRound=null;
+    renderRound();
+    window.scrollTo({top:0,behavior:'smooth'});
+  } else {
+    result.forEach((_,i)=>{totals[i]+=result[i].total;});
+    history.push({round,data:result});
+    if(round>=10){showFinale();return;}
+    round++;
+    renderRound();
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+}
+
+function startEdit(r){
+  const entry=history.find(h=>h.round===r);
+  if(!entry)return;
+  editingRound=r;
+  switchTab('input');
+  renderRound(entry.data);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function switchTab(tab){
+  document.getElementById('tbtn-input').className='tab-btn'+(tab==='input'?' active':'');
+  document.getElementById('tbtn-hist').className='tab-btn'+(tab==='hist'?' active':'');
+  document.getElementById('tab-input').style.display=tab==='input'?'block':'none';
+  document.getElementById('tab-hist').style.display=tab==='hist'?'block':'none';
+  if(tab==='hist')renderHistTab();
+}
+
+function renderHistTab(){
+  const si=[...players.keys()].sort((a,b)=>totals[b]-totals[a]);
+  document.getElementById('ranking-now').innerHTML=si.map((i,rank)=>`
+    <div class="rank-row${rank===0?' rank-1st':''}">
+      <span class="rank-num">${['🥇','🥈','🥉'][rank]||rank+1}</span>
+      <div class="rank-dot" style="background:${COLORS[i]}"></div>
+      <span class="rank-name">${players[i].name}</span>
+      <span class="rank-score" style="color:${rank===0?'var(--purple)':'var(--text)'}">${totals[i]}pt</span>
+    </div>`).join('');
+
+  const hl=document.getElementById('hist-list');
+  hl.innerHTML='';
+  if(history.length===0){
+    hl.innerHTML='<div style="text-align:center;color:var(--text3);font-size:13px;padding:20px">まだラウンドが終わっていません</div>';
+    return;
+  }
+  history.slice().reverse().forEach(h=>{
+    const d=document.createElement('div');
+    d.className='hist-card';
+    d.innerHTML=`<div class="hist-card-header">
+      <span class="hist-round-label">ラウンド ${h.round}</span>
+      <button class="hist-edit-btn" onclick="startEdit(${h.round})">✏️ 修正</button>
+    </div>`+h.data.map((r,i)=>`
+      <div class="hist-row">
+        <div class="hist-player">
+          <div class="hist-dot" style="background:${COLORS[i]}"></div>
+          <span>${r.name}</span>
+          <span class="hist-bid">宣言${r.bid}/実${r.win} ${r.success?'✓':'✗'}</span>
+        </div>
+        <span class="hist-pts" style="color:${r.total>0?'var(--teal)':r.total<0?'var(--red)':'var(--text3)'}">${r.total>=0?'+':''}${r.total}pt</span>
+      </div>`).join('');
+    hl.appendChild(d);
+  });
+}
+
+function showFinale(){
+  document.getElementById('view-game').style.display='none';
+  document.getElementById('view-finale').style.display='block';
+  const si=[...players.keys()].sort((a,b)=>totals[b]-totals[a]);
+  document.getElementById('finale-winner').textContent=players[si[0]].name+' の勝利！';
+  document.getElementById('finale-sub').textContent=totals[si[0]]+'pt で七つの海の船長に！';
+  const medals=['🥇','🥈','🥉'];
+  document.getElementById('finale-ranking').innerHTML=si.map((i,rank)=>`
+    <div class="finale-rank-row${rank===0?' gold':''}">
+      <span class="medal">${medals[rank]||rank+1}</span>
+      <div class="finale-dot" style="background:${COLORS[i]}"></div>
+      <span class="finale-name">${players[i].name}</span>
+      <span class="finale-score">${totals[i]}pt</span>
+    </div>`).join('');
+}
+
+init();
+</script>
+</body>
+</html>
