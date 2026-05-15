@@ -423,7 +423,7 @@ function renderRound(prefill){
     d.className='bonus-player';
     d.innerHTML=`<div class="bonus-player-name"><div class="player-color" style="background:${COLORS[i]}"></div>${p.name}</div>
     <div class="bonus-item">
-      <div><div class="bonus-item-label">☠️ 倒した海賊の数</div><div class="bonus-item-sub">+30pt × 数（SK出す前に出た海賊のみ）</div></div>
+      <div><div class="bonus-item-label">☠️ SKで海賊に勝利</div><div class="bonus-item-sub">+30pt × 海賊の数</div></div>
       ${spinnerHTML('pirate-'+i,0,5,pf?pf.pirates:0)}
     </div>
     <div class="bonus-item">
